@@ -1,4 +1,4 @@
-local Rayfield = loadstring(game:HttpGet('https://githubusercontent.com'))()
+local Rayfield = loadstring(game:HttpGet(' https : / / raw . githubusercontent . com / shlexware / Rayfield / main / source '))()
 
 local Players    = game:GetService("Players")
 local workspace  = game:GetService("Workspace")
