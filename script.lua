@@ -14,7 +14,7 @@ end)
 
 local FRUIT_CYCLE_DELAY = 4
 
--- ВСЕ ФУНКЦИИ АВТОМАТИЧЕСКИ ВКЛЮЧЕНЫ
+-- ВСЕ ФУНКЦИИ АВТОМАТИЧЕСКИ ВКЛЮЧЕНЫ НА 100%
 local ENABLED = {
     AutoBuyUpgrades   = true,
     AutoCollectFruit  = true,
@@ -170,7 +170,7 @@ task.spawn(function()
     end)
 end)
 
--- НАДЁЖНЫЙ ТАЙМЕР ПЕРЕРОЖДЕНИЯ БЕЗ КЛИКОВ (РАЗ В 30 СЕКУНД)
+-- НАПРЯМУЮ ОТПРАВЛЯЕМ ЗАПРОС НА ВОЗРОЖДЕНИЕ ИНВЕСТОРОВ (КАЖДЫЕ 30 СЕКУНД)
 task.spawn(function()
     while true do
         task.wait(30)
@@ -179,17 +179,14 @@ task.spawn(function()
             if t then
                 local remotes = t:FindFirstChild("Remotes")
                 if remotes then
-                    -- Проверяем все возможные варианты скрытых сетевых кнопок
-                    local rebirthRF = remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth") or remotes:FindFirstChild("InvestorRebirth")
-                    
-                    if rebirthRF then
-                        -- В играх на этом движке подтверждение отсылается в виде аргумента "Confirm" или true
-                        if rebirthRF:IsA("RemoteFunction") then
-                            pcall(function() rebirthRF:InvokeServer("Confirm") end)
-                            pcall(function() rebirthRF:InvokeServer(true) end)
-                        elseif rebirthRF:IsA("RemoteEvent") then
-                            pcall(function() rebirthRF:FireServer("Confirm") end)
-                            pcall(function() rebirthRF:FireServer(true) end)
+                    local target = remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth") or remotes:FindFirstChild("InvestorRebirth")
+                    if target then
+                        if target:IsA("RemoteFunction") then
+                            pcall(function() target:InvokeServer("Confirm") end)
+                            pcall(function() target:InvokeServer(true) end)
+                        elseif target:IsA("RemoteEvent") then
+                            pcall(function() target:FireServer("Confirm") end)
+                            pcall(function() target:FireServer(true) end)
                         end
                     end
                 end
@@ -202,4 +199,4 @@ task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
-print("[-] Финальный чит на Лимоны успешно активирован!")
+print("[-] Чит успешно запущен напрямую без интернета!")
