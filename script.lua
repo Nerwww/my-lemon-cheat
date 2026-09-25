@@ -1,5 +1,3 @@
-local Kavo = loadstring(game:HttpGet('https://'..'raw.'..'github'..'usercontent'..'.com/'..'xHeptc/'..'Kavo-UI-'..'Library/'..'main/'..'source.lua'))()
-
 local Players    = game:GetService("Players")
 local workspace  = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
@@ -14,13 +12,14 @@ player.CharacterAdded:Connect(function(c)
     root = c:WaitForChild("HumanoidRootPart")
 end)
 
-local FRUIT_CYCLE_DELAY = 5
+local FRUIT_CYCLE_DELAY = 4
 
+-- ВСЕ ФУНКЦИИ СРАЗУ ВКЛЮЧЕНЫ НА 100% И РАБОТАЮТ АВТОМАТИЧЕСКИ
 local ENABLED = {
-    AutoBuyUpgrades   = false,
-    AutoCollectFruit  = false,
-    AutoCollectDrops  = false,
-    AutoUpgradeStands = false,
+    AutoBuyUpgrades   = true,  -- Авто-покупка кнопок
+    AutoCollectFruit  = true,  -- Авто-сбор лимонов с деревьев
+    AutoCollectDrops  = true,  -- Авто-сбор падающих дропов
+    AutoUpgradeStands = true,  -- Авто-прокачка стендов
 }
 
 local function getMyTycoon()
@@ -71,7 +70,7 @@ local function runAutoUpgrades()
             buyLock[obj] = true
             task.spawn(function()
                 pcall(function() obj:InvokeServer(false) end)
-                task.wait(1)
+                task.wait(0.5)
                 buyLock[obj] = nil
             end)
         end
@@ -152,24 +151,27 @@ local function runAutoFruit()
     end
 end
 
+task.spawn(function()
+    local core = RS:WaitForChild("Core", 10)
+    if not core then return end
+    local signal  = core:FindFirstChild("RemoteSignal")
+    local request = core:FindFirstChild("RemoteRequest")
+    if not signal or not request then return end
+    local newDrop    = signal:FindFirstChild("CashDropService.New")
+    local redeemDrop = request:FindFirstChild("CashDropService.Redeem")
+    if not newDrop or not redeemDrop then return end
+    newDrop.OnClientEvent:Connect(function(id)
+        if not ENABLED.AutoCollectDrops then return end
+        if id == nil then return end
+        task.spawn(function()
+            pcall(function() return redeemDrop:InvokeServer(id) end)
+        end)
+    end)
+end)
+
+-- Сразу запускаем все функции автоматизации на полную мощность
 task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
--- НОВЫЙ ИНТЕРФЕЙС KAVO (СТАРЫЙ ИЗ СТРОКИ 178 ПОЛНОСТЬЮ УДАЛЕН)
-local Window = Kavo:CreateLib("Lemon Tycoon", "Classic")
-
-local Tab = Window:NewTab("Главная")
-local Section = Tab:NewSection("Автоматизация")
-
-Section:NewToggle("Авто-Покупка Апгрейдов", "Автоматически скупает кнопки", function(state)
-    ENABLED.AutoBuyUpgrades = state
-end)
-
-Section:NewToggle("Авто-Сбор Фруктов", "Собирает лимоны с деревьев", function(state)
-    ENABLED.AutoCollectFruit = state
-end)
-
-Section:NewToggle("Авто-Улучшение Стендов", "Прокачивает стенды", function(state)
-    ENABLED.AutoUpgradeStands = state
-end)
+print("[-] Лимонный чит успешно активирован в скрытом режиме!")
