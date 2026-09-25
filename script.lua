@@ -170,7 +170,7 @@ task.spawn(function()
     end)
 end)
 
--- УМНЫЙ ТАЙМЕР ДЛЯ ПРОБИТИЯ ДВУХ ПОДТВЕРЖДЕНИЙ ВОЗРОЖДЕНИЯ (РАЗ В 30 СЕКУНД)
+-- СУПЕР-ТАЙМЕР ОБХОДА ОКРЫТИЯ ОКНА (ВЫЗЫВАЕМ СЕРВЕР НАПРЯМУЮ С ПОДТВЕРЖДЕНИЕМ)
 task.spawn(function()
     while true do
         task.wait(30)
@@ -179,35 +179,17 @@ task.spawn(function()
             if t then
                 local remotes = t:FindFirstChild("Remotes")
                 if remotes then
-                    -- Шаг 1: Посылаем игре стандартный запрос на открытие меню/запуск возрождения
+                    -- Находим нужную функцию в игре
                     local targetRemote = remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth") or remotes:FindFirstChild("InvestorRebirth")
                     if targetRemote then
+                        -- Отправляем аргумент true, сообщая игре, что мы УЖЕ согласились в окне подтверждения!
+                        pcall(function() targetRemote:InvokeServer(true) end)
+                        pcall(function() targetRemote:FireServer(true) end)
+                        
+                        -- Альтернативный вариант для некоторых версий тайкунов (отправка пустой строки-подтверждения)
+                        pcall(function() targetRemote:InvokeServer() end)
                         pcall(function() targetRemote:FireServer() end)
                     end
-                    
-                    -- Шаг 2: Ждем полсекунды и кликаем по зеленой кнопке подтверждения в интерфейсе экрана
-                    task.wait(0.5)
-                    pcall(function()
-                        local pGui = player:FindFirstChild("PlayerGui")
-                        if pGui then
-                            -- Ищем во всех окнах кнопку с надписью "Возрождение!" или зеленую кнопку подтверждения
-                            for _, gui in ipairs(pGui:GetDescendants()) do
-                                if gui:IsA("TextButton") and (gui.Text:find("Возрождение") or gui.Text:find("Ascend") or gui.Name:lower():find("confirm")) then
-                                    -- Проверяем, что кнопка видна на экране, и кликаем её
-                                    if gui.IsVisible or (gui.Parent:IsA("GuiObject") and gui.Parent.Visible) then
-                                        local events = {"MouseButton1Click", "MouseButton1Down", "Activated"}
-                                        for _, event in ipairs(events) do
-                                            if gui[event] then
-                                                for _, signal in ipairs(getconnections(gui[event])) do
-                                                    signal:Fire()
-                                                end
-                                            end
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end)
                 end
             end
         end
@@ -218,4 +200,4 @@ task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
-print("[-] Скрипт с авто-пробитием подтверждения Возрождения успешно запущен!")
+print("[-] Скрипт с обходом окон подтверждения успешно запущен!")
