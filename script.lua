@@ -15,7 +15,6 @@ end)
 
 local FRUIT_CYCLE_DELAY = 4
 
--- ВСЕ ФУНКЦИИ АВТОМАТИЧЕСКИ ВКЛЮЧЕНЫ
 local ENABLED = {
     AutoBuyUpgrades   = true,
     AutoCollectFruit  = true,
@@ -171,46 +170,48 @@ task.spawn(function()
     end)
 end)
 
--- ХИТРЫЙ ТАЙМЕР НА КЛИК ПО КООРДИНАТАМ ЭКРАНА (РАЗ В 30 СЕКУНД)
+-- ТОТАЛЬНЫЙ КЛИКЕР ЭКРАННЫХ КНОПОК ПОДТВЕРЖДЕНИЯ (РАЗ В 30 СЕКУНД)
 task.spawn(function()
     while true do
         task.wait(30)
         if ENABLED.AutoRebirth then
-            local t = tycoon()
-            if t then
-                local remotes = t:FindFirstChild("Remotes")
-                if remotes then
-                    -- Шаг 1: Активируем открытие окна через стандартные сетевые ивенты
-                    local targetRemote = remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth") or remotes:FindFirstChild("InvestorRebirth")
-                    if targetRemote then
-                        pcall(function() targetRemote:FireServer() end)
-                    end
+            pcall(function()
+                -- Сначала открываем меню через сетевой ивент (чтобы появилось первое окно)
+                local remotes = tycoon() and tycoon():FindFirstChild("Remotes")
+                local targetRemote = remotes and (remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth") or remotes:FindFirstChild("InvestorRebirth"))
+                if targetRemote then targetRemote:FireServer() end
+                
+                task.wait(0.5)
+                
+                -- Кликаем по кнопкам интерфейса
+                local pGui = player:FindFirstChild("PlayerGui")
+                if pGui then
+                    VirtualUser:CaptureController()
                     
-                    -- Шаг 2: Ждем, пока окно появится, и эмулируем аппаратный клик мыши по UI
-                    task.wait(0.6)
-                    pcall(function()
-                        local pGui = player:FindFirstChild("PlayerGui")
-                        if pGui then
-                            for _, gui in ipairs(pGui:GetDescendants()) do
-                                -- Ищем именно ту зеленую кнопку подтверждения из вашего скриншота
-                                if gui:IsA("TextButton") and (gui.Text:find("Возрождение") or gui.Text:find("Ascend") or gui.Name:lower():find("confirm")) then
-                                    if gui.IsVisible or (gui.Parent:IsA("GuiObject") and gui.Parent.Visible) then
-                                        -- Вычисляем её центр на вашем мониторе/экране
-                                        local absPos = gui.AbsolutePosition
-                                        local absSize = gui.AbsoluteSize
-                                        local clickX = absPos.X + (absSize.X / 2)
-                                        local clickY = absPos.Y + (absSize.Y / 2) + 50 -- Учитываем смещение верхней панели Roblox
-                                        
-                                        -- Физический виртуальный клик мышкой по кнопке
-                                        VirtualUser:CaptureController()
-                                        VirtualUser:ClickButton1(Vector2.new(clickX, clickY))
-                                    end
+                    -- Проходимся по интерфейсу ДВАЖДЫ, чтобы пробить первое и второе окно подтверждения подряд
+                    for i = 1, 2 do
+                        for _, gui in ipairs(pGui:GetDescendants()) do
+                            if gui:IsA("TextButton") or gui:IsA("ImageButton") then
+                                local text = gui:ClassName == "TextButton" and gui.Text:lower() or ""
+                                local name = gui.Name:lower()
+                                
+                                -- Находим ЛЮБЫЕ кнопки, связанные с инопланетянами, возрождением или подтверждением
+                                if text:find("возрождение") or text:find("ascend") or text:find("rebirth") or text:find("уверены") or name:find("confirm") or name:find("investor") or name:find("alien") then
+                                    local absPos = gui.AbsolutePosition
+                                    local absSize = gui.AbsoluteSize
+                                    local cx = absPos.X + (absSize.X / 2)
+                                    local cy = absPos.Y + (absSize.Y / 2) + 55 -- сдвиг панели
+                                    
+                                    -- Прожимаем физический клик мышкой по кнопке
+                                    VirtualUser:ClickButton1(Vector2.new(cx, cy))
+                                    task.wait(0.2)
                                 end
                             end
                         end
-                    end)
+                        task.wait(0.4) -- небольшая пауза перед вторым окном
+                    end
                 end
-            end
+            end)
         end
     end
 end)
@@ -219,4 +220,4 @@ task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
-print("[-] Скрипт с аппаратным обходом кликов GUI запущен!")
+print("[-] Скрипт экранного авто-Возрождения успешно запущен!")
