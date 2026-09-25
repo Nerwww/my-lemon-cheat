@@ -1,7 +1,10 @@
+local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
+
 local Players    = game:GetService("Players")
 local workspace  = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local RS         = game:GetService("ReplicatedStorage")
+local VirtualUser= game:GetService("VirtualUser")
 
 local player = Players.LocalPlayer
 local char   = player.Character or player.CharacterAdded:Wait()
@@ -12,15 +15,51 @@ player.CharacterAdded:Connect(function(c)
     root = c:WaitForChild("HumanoidRootPart")
 end)
 
-local FRUIT_CYCLE_DELAY = 2 -- Сделали сбор фруктов еще быстрее!
+local FRUIT_CYCLE_DELAY    = 5
+local PHONE_OFFER_RESPONSE = "Accept"
+local POWER_NAMES = { "UpgradeStack", "BuyNext", "Manage", "WalkSpeed", "ClickFruitValue" }
 
--- ВСЕ ФУНКЦИИ АВТОМАТИЧЕСКИ ВКЛЮЧЕНЫ НА МАКСИМУМ
+local INCOME_STREAMS = {
+    "LemonDash", "LemonDepot", "LemonLabs",
+    "LemonTrading", "LemonRepublic", "LemonRobotics",
+    "LemonStand", "LemonX",
+}
+
 local ENABLED = {
-    AutoBuyUpgrades   = true,
-    AutoCollectFruit  = true,
-    AutoCollectDrops  = true,
-    AutoUpgradeStands = true,
-    AutoRebirth       = true,
+    AutoBuyUpgrades   = false,
+    AutoCollectFruit  = false,
+    AutoCollectDrops  = false,
+    AutoClick         = false,
+    AutoPhoneOffer    = false,
+    AutoUpgradeStands = false,
+    AutoRebirth       = false,
+    AutoAscend        = false,
+    AutoEvolve        = false,
+    AutoPowerUpgrade  = false,
+    AutoOfflineCash   = false,
+    AutoTimeCash      = false,
+    AutoEarnerBoost   = false,
+    AutoMinigameRace  = false,
+    AutoMinigameTrade = false,
+    AutoCashVine      = false,
+    AntiAFK           = false,
+    BoostFPS          = false,
+}
+
+local STATS = {
+    upgradesBought = 0,
+    fruitCollected = 0,
+    dropsCollected = 0,
+    clicks         = 0,
+    phoneOffers    = 0,
+    standsUpgraded = 0,
+    rebirths       = 0,
+    ascends        = 0,
+    evolves        = 0,
+    powerUpgrades  = 0,
+    racesWon       = 0,
+    tradesWon      = 0,
+    vineCollected  = 0,
 }
 
 local function getMyTycoon()
@@ -49,9 +88,34 @@ local function tycoon()
     return myTycoon
 end
 
+local function rem(name)
+    local t = tycoon()
+    if not t then return nil end
+    local remotes = t:FindFirstChild("Remotes")
+    if not remotes then return nil end
+    return remotes:FindFirstChild(name)
+end
+
+local function getCash()
+    local ls = player:FindFirstChild("leaderstats")
+    if not ls then return 0 end
+    for _, v in ipairs(ls:GetChildren()) do
+        if v:IsA("NumberValue") or v:IsA("IntValue") then
+            local n = v.Name:lower()
+            if n:find("cash") or n:find("money") or n:find("lemon") or n:find("coin") then
+                return v.Value
+            end
+        end
+    end
+    local best = 0
+    for _, v in ipairs(ls:GetChildren()) do
+        if (v:IsA("NumberValue") or v:IsA("IntValue")) and v.Value > best then best = v.Value end
+    end
+    return best
+end
+
 local buyLock = {}
 
--- НАДЕЖНЫЙ СКУПЩИК КНОПОК
 local function runAutoUpgrades()
     while not myTycoon do task.wait(0.5) end
     RunService.Heartbeat:Connect(function()
@@ -66,13 +130,14 @@ local function runAutoUpgrades()
             local btn = obj.Parent
             if not btn then continue end
             if buyLock[obj] then continue end
-            if btn:GetAttribute("Purchased") == true then continue end
+            if btn:GetAttribute("Purchased") == true  then continue end
             if btn:GetAttribute("Enabled") == false then continue end
-            if btn:GetAttribute("Shown") == false then continue end
+            if btn:GetAttribute("Shown")     == false then continue end
             buyLock[obj] = true
             task.spawn(function()
                 pcall(function() obj:InvokeServer(false) end)
-                task.wait(0.3)
+                STATS.upgradesBought += 1
+                task.wait(1)
                 buyLock[obj] = nil
             end)
         end
@@ -107,7 +172,6 @@ local function buildStandRFCache()
     end
 end
 
--- ПРОКАЧКА СТЕНДОВ
 local function runAutoUpgradeStands()
     while not myTycoon do task.wait(0.5) end
     buildStandRFCache()
@@ -116,13 +180,13 @@ local function runAutoUpgradeStands()
         if not next(cachedStandRFs) then buildStandRFCache() return end
         for _, upgradeRF in pairs(cachedStandRFs) do
             task.spawn(function()
-                pcall(function() upgradeRF:InvokeServer(5) end)
+                local ok = pcall(function() upgradeRF:InvokeServer(5) end)
+                if ok then STATS.standsUpgraded += 1 end
             end)
         end
     end)
 end
 
--- СБОР ЛИМОНОВ С ТЕЛЕПОРТОМ
 local function runAutoFruit()
     while true do
         task.wait(FRUIT_CYCLE_DELAY)
@@ -147,15 +211,15 @@ local function runAutoFruit()
             if not ENABLED.AutoCollectFruit then break end
             if not entry.part or not entry.part.Parent then continue end
             pcall(function() root.CFrame = CFrame.new(entry.part.Position + Vector3.new(0, 3, 0)) end)
-            task.wait(0.05)
-            pcall(fireclickdetector, entry.cd)
-            task.wait(0.05)
+            task.wait(0.1)
+            local ok = pcall(fireclickdetector, entry.cd)
+            if ok then STATS.fruitCollected += 1 end
+            task.wait(0.15)
         end
         pcall(function() root.CFrame = saved end)
     end
 end
 
--- СБОР ДРОПОВ
 task.spawn(function()
     local core = RS:WaitForChild("Core", 10)
     if not core then return end
@@ -169,38 +233,75 @@ task.spawn(function()
         if not ENABLED.AutoCollectDrops then return end
         if id == nil then return end
         task.spawn(function()
-            pcall(function() return redeemDrop:InvokeServer(id) end)
+            local ok = pcall(function() return redeemDrop:InvokeServer(id) end)
+            if ok then STATS.dropsCollected += 1 end
         end)
     end)
 end)
 
--- РАБОЧИЙ ТАЙМЕР ВОЗРОЖДЕНИЯ (КАЖДЫЕ 30 СЕКУНД)
-task.spawn(function()
+local function runAutoCashDrops()
     while true do
-        task.wait(30)
-        if ENABLED.AutoRebirth then
-            local t = tycoon()
-            if t then
-                local remotes = t:FindFirstChild("Remotes")
-                if remotes then
-                    local target = remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth") or remotes:FindFirstChild("InvestorRebirth")
-                    if target then
-                        if target:IsA("RemoteFunction") then
-                            pcall(function() target:InvokeServer("Confirm") end)
-                            pcall(function() target:InvokeServer(true) end)
-                        elseif target:IsA("RemoteEvent") then
-                            pcall(function() target:FireServer("Confirm") end)
-                            pcall(function() target:FireServer(true) end)
-                        end
-                    end
-                end
-            end
-        end
+        task.wait(4)
     end
-end)
+end
 
 task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
+task.spawn(runAutoCashDrops)
 
-print("[-] Полная автоматизация: скупка, сбор и перерождения запущены!")
+-- ИНИЦИАЛИЗАЦИЯ ИНТЕРФЕЙСА MACLIB
+local Window = MacLib:CreateWindow({
+    Title = "Patch Hub",
+    Subtitle = "Sell Lemons",
+    Size = UDim2.fromOffset(550, 350),
+    Drag = true
+})
+
+local Tab = Window:CreateTab({ Name = "Farm", Icon = "rbxassetid://4483345998" })
+
+Tab:CreateToggle({
+    Name = "Auto Buy Upgrades",
+    Default = false,
+    Callback = function(state) ENABLED.AutoBuyUpgrades = state end
+})
+
+Tab:CreateToggle({
+    Name = "Auto Click Income",
+    Default = false,
+    Callback = function(state) ENABLED.AutoClick = state end
+})
+
+Tab:CreateToggle({
+    Name = "Auto Upgrade Stands",
+    Default = false,
+    Callback = function(state) ENABLED.AutoUpgradeStands = state end
+})
+
+Tab:CreateToggle({
+    Name = "Auto Collect Fruit",
+    Default = false,
+    Callback = function(state) ENABLED.AutoCollectFruit = state end
+})
+
+Tab:CreateToggle({
+    Name = "Auto Collect Drops",
+    Default = false,
+    Callback = function(state) ENABLED.AutoCollectDrops = state end
+})
+
+-- ВИЗУАЛЬНАЯ ЗАМЕНА СЛАЙДЕРА НА КНОПКУ МГНОВЕННОГО ВОЗРОЖДЕНИЯ В 1 КЛИК
+Tab:CreateButton({
+    Name = "Instant Rebirth (Investor)",
+    Callback = function()
+        local rebirthRF = rem("Ascend") or rem("Evolve") or rem("Rebirth") or rem("InvestorRebirth")
+        if rebirthRF then
+            if rebirthRF:IsA("RemoteFunction") then
+                pcall(function() rebirthRF:InvokeServer("Confirm") end)
+                pcall(function() rebirthRF:InvokeServer(true) end)
+            elseif rebirthRF:IsA("RemoteEvent") then
+                pcall(function() rebirthRF:FireServer("Confirm") end)
+                pcall(function() rebirthRF:FireServer(true) end)
+            end
+            STATS.rebirths += 1
+        end
