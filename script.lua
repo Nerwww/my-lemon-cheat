@@ -170,7 +170,7 @@ task.spawn(function()
     end)
 end)
 
--- УЛУЧШЕННЫЙ ТАЙМЕР ПОД ИНОПЛАНЕТНЫХ ИНВЕСТОРОВ (РАЗ В 30 СЕКУНД)
+-- УМНЫЙ ТАЙМЕР ДЛЯ ПРОБИТИЯ ДВУХ ПОДТВЕРЖДЕНИЙ ВОЗРОЖДЕНИЯ (РАЗ В 30 СЕКУНД)
 task.spawn(function()
     while true do
         task.wait(30)
@@ -179,11 +179,35 @@ task.spawn(function()
             if t then
                 local remotes = t:FindFirstChild("Remotes")
                 if remotes then
-                    -- Проверяем все известные скрытые события игры для Возрождения
+                    -- Шаг 1: Посылаем игре стандартный запрос на открытие меню/запуск возрождения
                     local targetRemote = remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth") or remotes:FindFirstChild("InvestorRebirth")
                     if targetRemote then
                         pcall(function() targetRemote:FireServer() end)
                     end
+                    
+                    -- Шаг 2: Ждем полсекунды и кликаем по зеленой кнопке подтверждения в интерфейсе экрана
+                    task.wait(0.5)
+                    pcall(function()
+                        local pGui = player:FindFirstChild("PlayerGui")
+                        if pGui then
+                            -- Ищем во всех окнах кнопку с надписью "Возрождение!" или зеленую кнопку подтверждения
+                            for _, gui in ipairs(pGui:GetDescendants()) do
+                                if gui:IsA("TextButton") and (gui.Text:find("Возрождение") or gui.Text:find("Ascend") or gui.Name:lower():find("confirm")) then
+                                    -- Проверяем, что кнопка видна на экране, и кликаем её
+                                    if gui.IsVisible or (gui.Parent:IsA("GuiObject") and gui.Parent.Visible) then
+                                        local events = {"MouseButton1Click", "MouseButton1Down", "Activated"}
+                                        for _, event in ipairs(events) do
+                                            if gui[event] then
+                                                for _, signal in ipairs(getconnections(gui[event])) do
+                                                    signal:Fire()
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end)
                 end
             end
         end
@@ -194,5 +218,4 @@ task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
-print("[-] Скрипт с авто-Возрождением инвесторов готов к работе!")
-
+print("[-] Скрипт с авто-пробитием подтверждения Возрождения успешно запущен!")
