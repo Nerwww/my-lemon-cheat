@@ -2,7 +2,6 @@ local Players    = game:GetService("Players")
 local workspace  = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local RS         = game:GetService("ReplicatedStorage")
-local VirtualUser= game:GetService("VirtualUser")
 
 local player = Players.LocalPlayer
 local char   = player.Character or player.CharacterAdded:Wait()
@@ -15,6 +14,7 @@ end)
 
 local FRUIT_CYCLE_DELAY = 4
 
+-- ВСЕ ФУНКЦИИ АВТОМАТИЧЕСКИ ВКЛЮЧЕНЫ
 local ENABLED = {
     AutoBuyUpgrades   = true,
     AutoCollectFruit  = true,
@@ -170,48 +170,30 @@ task.spawn(function()
     end)
 end)
 
--- ТОТАЛЬНЫЙ КЛИКЕР ЭКРАННЫХ КНОПОК ПОДТВЕРЖДЕНИЯ (РАЗ В 30 СЕКУНД)
+-- НАДЁЖНЫЙ ТАЙМЕР ПЕРЕРОЖДЕНИЯ БЕЗ КЛИКОВ (РАЗ В 30 СЕКУНД)
 task.spawn(function()
     while true do
         task.wait(30)
         if ENABLED.AutoRebirth then
-            pcall(function()
-                -- Сначала открываем меню через сетевой ивент (чтобы появилось первое окно)
-                local remotes = tycoon() and tycoon():FindFirstChild("Remotes")
-                local targetRemote = remotes and (remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth") or remotes:FindFirstChild("InvestorRebirth"))
-                if targetRemote then targetRemote:FireServer() end
-                
-                task.wait(0.5)
-                
-                -- Кликаем по кнопкам интерфейса
-                local pGui = player:FindFirstChild("PlayerGui")
-                if pGui then
-                    VirtualUser:CaptureController()
+            local t = tycoon()
+            if t then
+                local remotes = t:FindFirstChild("Remotes")
+                if remotes then
+                    -- Проверяем все возможные варианты скрытых сетевых кнопок
+                    local rebirthRF = remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth") or remotes:FindFirstChild("InvestorRebirth")
                     
-                    -- Проходимся по интерфейсу ДВАЖДЫ, чтобы пробить первое и второе окно подтверждения подряд
-                    for i = 1, 2 do
-                        for _, gui in ipairs(pGui:GetDescendants()) do
-                            if gui:IsA("TextButton") or gui:IsA("ImageButton") then
-                                local text = gui:ClassName == "TextButton" and gui.Text:lower() or ""
-                                local name = gui.Name:lower()
-                                
-                                -- Находим ЛЮБЫЕ кнопки, связанные с инопланетянами, возрождением или подтверждением
-                                if text:find("возрождение") or text:find("ascend") or text:find("rebirth") or text:find("уверены") or name:find("confirm") or name:find("investor") or name:find("alien") then
-                                    local absPos = gui.AbsolutePosition
-                                    local absSize = gui.AbsoluteSize
-                                    local cx = absPos.X + (absSize.X / 2)
-                                    local cy = absPos.Y + (absSize.Y / 2) + 55 -- сдвиг панели
-                                    
-                                    -- Прожимаем физический клик мышкой по кнопке
-                                    VirtualUser:ClickButton1(Vector2.new(cx, cy))
-                                    task.wait(0.2)
-                                end
-                            end
+                    if rebirthRF then
+                        -- В играх на этом движке подтверждение отсылается в виде аргумента "Confirm" или true
+                        if rebirthRF:IsA("RemoteFunction") then
+                            pcall(function() rebirthRF:InvokeServer("Confirm") end)
+                            pcall(function() rebirthRF:InvokeServer(true) end)
+                        elseif rebirthRF:IsA("RemoteEvent") then
+                            pcall(function() rebirthRF:FireServer("Confirm") end)
+                            pcall(function() rebirthRF:FireServer(true) end)
                         end
-                        task.wait(0.4) -- небольшая пауза перед вторым окном
                     end
                 end
-            end)
+            end
         end
     end
 end)
@@ -220,4 +202,4 @@ task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
-print("[-] Скрипт экранного авто-Возрождения успешно запущен!")
+print("[-] Финальный чит на Лимоны успешно активирован!")
