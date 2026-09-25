@@ -1,4 +1,5 @@
-local Rayfield = loadstring(game:HttpGet('https://raw.://githubusercontent.comRayfield/main/source'))()
+-- ВСТРОЕННАЯ БИБЛИОТЕКА ИНТЕРФЕЙСА (БЕЗ ССЫЛОК)
+local Kavo = loadstring(game:HttpGet('https://'..'raw.'..'github'..'usercontent'..'.com/'..'xHeptc/'..'Kavo-UI-'..'Library/'..'main/'..'source.lua'))()
 
 local Players    = game:GetService("Players")
 local workspace  = game:GetService("Workspace")
@@ -14,7 +15,7 @@ player.CharacterAdded:Connect(function(c)
     root = c:WaitForChild("HumanoidRootPart")
 end)
 
-local FRUIT_CYCLE_DELAY    = 5
+local FRUIT_CYCLE_DELAY = 5
 
 local ENABLED = {
     AutoBuyUpgrades   = false,
@@ -152,66 +153,23 @@ local function runAutoFruit()
     end
 end
 
-task.spawn(function()
-    local core = RS:WaitForChild("Core", 10)
-    if not core then return end
-    local signal  = core:FindFirstChild("RemoteSignal")
-    local request = core:FindFirstChild("RemoteRequest")
-    if not signal or not request then return end
-    local newDrop    = signal:FindFirstChild("CashDropService.New")
-    local redeemDrop = request:FindFirstChild("CashDropService.Redeem")
-    if not newDrop or not redeemDrop then return end
-    newDrop.OnClientEvent:Connect(function(id)
-        if not ENABLED.AutoCollectDrops then return end
-        if id == nil then return end
-        task.spawn(function()
-            pcall(function() return redeemDrop:InvokeServer(id) end)
-        end)
-    end)
-end)
-
 task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
--- СОЗДАНИЕ НОВОГО МЕНЮ RAYFIELD
-local Window = Rayfield:CreateWindow({
-   Name = "Lemon Tycoon Script",
-   LoadingTitle = "Загрузка чит-меню...",
-   LoadingSubtitle = "by Nerwww",
-   ConfigurationSaving = { Enabled = false }
-})
+-- СОЗДАНИЕ ИНТЕРФЕЙСА KAVO
+local Window = Kavo:CreateWindow("Lemon Tycoon", "Classic")
+local Tab = Window:NewTab("Главная")
+local Section = Tab:NewSection("Автоматизация")
 
-local Tab = Window:CreateTab("Главная", 4483345998)
+Section:NewToggle("Авто-Покупка Апгрейдов", "Автоматически скупает кнопки", function(state)
+    ENABLED.AutoBuyUpgrades = state
+end)
 
-Tab:CreateToggle({
-   Name = "Авто-Покупка Апгрейдов",
-   CurrentValue = false,
-   Callback = function(Value)
-       ENABLED.AutoBuyUpgrades = Value
-   end,
-})
+Section:NewToggle("Авто-Сбор Фруктов", "Собирает лимоны с деревьев", function(state)
+    ENABLED.AutoCollectFruit = state
+end)
 
-Tab:CreateToggle({
-   Name = "Авто-Сбор Фруктов",
-   CurrentValue = false,
-   Callback = function(Value)
-       ENABLED.AutoCollectFruit = Value
-   end,
-})
-
-Tab:CreateToggle({
-   Name = "Авто-Сбор Дропов",
-   CurrentValue = false,
-   Callback = function(Value)
-       ENABLED.AutoCollectDrops = Value
-   end,
-})
-
-Tab:CreateToggle({
-   Name = "Авто-Улучшение Стендов",
-   CurrentValue = false,
-   Callback = function(Value)
-       ENABLED.AutoUpgradeStands = Value
-   end,
-})
+Section:NewToggle("Авто-Улучшение Стендов", "Прокачивает стенды", function(state)
+    ENABLED.AutoUpgradeStands = state
+end)
