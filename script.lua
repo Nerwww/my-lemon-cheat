@@ -157,7 +157,8 @@ task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
 -- НОВЫЙ ИНТЕРФЕЙС KAVO (СТАРЫЙ ИЗ СТРОКИ 178 ПОЛНОСТЬЮ УДАЛЕН)
-local Window = Kavo:CreateWindow("Lemon Tycoon", "Classic")
+local Window = Kavo:CreateLib("Lemon Tycoon", "Classic")
+
 local Tab = Window:NewTab("Главная")
 local Section = Tab:NewSection("Автоматизация")
 
