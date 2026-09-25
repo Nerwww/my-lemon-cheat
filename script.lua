@@ -14,12 +14,13 @@ end)
 
 local FRUIT_CYCLE_DELAY = 4
 
--- ВСЕ ФУНКЦИИ СРАЗУ ВКЛЮЧЕНЫ НА 100% И РАБОТАЮТ АВТОМАТИЧЕСКИ
+-- ВСЕ ФУНКЦИИ АВТОМАТИЧЕСКИ ВКЛЮЧЕНЫ
 local ENABLED = {
-    AutoBuyUpgrades   = true,  -- Авто-покупка кнопок
-    AutoCollectFruit  = true,  -- Авто-сбор лимонов с деревьев
-    AutoCollectDrops  = true,  -- Авто-сбор падающих дропов
-    AutoUpgradeStands = true,  -- Авто-прокачка стендов
+    AutoBuyUpgrades   = true,
+    AutoCollectFruit  = true,
+    AutoCollectDrops  = true,
+    AutoUpgradeStands = true,
+    AutoRebirth       = true,
 }
 
 local function getMyTycoon()
@@ -169,9 +170,27 @@ task.spawn(function()
     end)
 end)
 
--- Сразу запускаем все функции автоматизации на полную мощность
+--ТАЙМЕР ПЕРЕРОЖДЕНИЯ КАЖДЫЕ 30 СЕКУНД
+task.spawn(function()
+    while true do
+        task.wait(30)
+        if ENABLED.AutoRebirth then
+            local t = tycoon()
+            if t then
+                local remotes = t:FindFirstChild("Remotes")
+                if remotes then
+                    local rebirthRemote = remotes:FindFirstChild("Rebirth")
+                    if rebirthRemote then
+                        pcall(function() rebirthRemote:FireServer() end)
+                    end
+                end
+            end
+        end
+    end
+end)
+
 task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
-print("[-] Лимонный чит успешно активирован в скрытом режиме!")
+print("[-] Лимонный чит + Авто-Ребёрт 30с успешно активирован!")
