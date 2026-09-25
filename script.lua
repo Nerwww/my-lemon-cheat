@@ -12,9 +12,9 @@ player.CharacterAdded:Connect(function(c)
     root = c:WaitForChild("HumanoidRootPart")
 end)
 
-local FRUIT_CYCLE_DELAY = 4
+local FRUIT_CYCLE_DELAY = 2 -- Сделали сбор фруктов еще быстрее!
 
--- ВСЕ ФУНКЦИИ АВТОМАТИЧЕСКИ ВКЛЮЧЕНЫ НА 100%
+-- ВСЕ ФУНКЦИИ АВТОМАТИЧЕСКИ ВКЛЮЧЕНЫ НА МАКСИМУМ
 local ENABLED = {
     AutoBuyUpgrades   = true,
     AutoCollectFruit  = true,
@@ -51,6 +51,7 @@ end
 
 local buyLock = {}
 
+-- НАДЕЖНЫЙ СКУПЩИК КНОПОК
 local function runAutoUpgrades()
     while not myTycoon do task.wait(0.5) end
     RunService.Heartbeat:Connect(function()
@@ -71,7 +72,7 @@ local function runAutoUpgrades()
             buyLock[obj] = true
             task.spawn(function()
                 pcall(function() obj:InvokeServer(false) end)
-                task.wait(0.5)
+                task.wait(0.3)
                 buyLock[obj] = nil
             end)
         end
@@ -106,6 +107,7 @@ local function buildStandRFCache()
     end
 end
 
+-- ПРОКАЧКА СТЕНДОВ
 local function runAutoUpgradeStands()
     while not myTycoon do task.wait(0.5) end
     buildStandRFCache()
@@ -120,6 +122,7 @@ local function runAutoUpgradeStands()
     end)
 end
 
+-- СБОР ЛИМОНОВ С ТЕЛЕПОРТОМ
 local function runAutoFruit()
     while true do
         task.wait(FRUIT_CYCLE_DELAY)
@@ -144,14 +147,15 @@ local function runAutoFruit()
             if not ENABLED.AutoCollectFruit then break end
             if not entry.part or not entry.part.Parent then continue end
             pcall(function() root.CFrame = CFrame.new(entry.part.Position + Vector3.new(0, 3, 0)) end)
-            task.wait(0.1)
+            task.wait(0.05)
             pcall(fireclickdetector, entry.cd)
-            task.wait(0.15)
+            task.wait(0.05)
         end
         pcall(function() root.CFrame = saved end)
     end
 end
 
+-- СБОР ДРОПОВ
 task.spawn(function()
     local core = RS:WaitForChild("Core", 10)
     if not core then return end
@@ -170,7 +174,7 @@ task.spawn(function()
     end)
 end)
 
--- НАПРЯМУЮ ОТПРАВЛЯЕМ ЗАПРОС НА ВОЗРОЖДЕНИЕ ИНВЕСТОРОВ (КАЖДЫЕ 30 СЕКУНД)
+-- РАБОЧИЙ ТАЙМЕР ВОЗРОЖДЕНИЯ (КАЖДЫЕ 30 СЕКУНД)
 task.spawn(function()
     while true do
         task.wait(30)
@@ -199,4 +203,4 @@ task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
-print("[-] Чит успешно запущен напрямую без интернета!")
+print("[-] Полная автоматизация: скупка, сбор и перерождения запущены!")
