@@ -1,110 +1,63 @@
-local MacLib = loadstring(game:HttpGet("https://github.com"))()
-
-local Players    = game:GetService("Players")
-local workspace  = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
-local RS         = game:GetService("ReplicatedStorage")
-
+local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local char   = player.Character or player.CharacterAdded:Wait()
-local root   = char:WaitForChild("HumanoidRootPart")
 
-local ENABLED = {
-    AutoBuyUpgrades   = false,
-    AutoCollectFruit  = false,
-    AutoCollectDrops  = false,
-    AutoClick         = false,
-    AutoUpgradeStands = false,
-    AutoAscend        = false,
-    AutoEvolve        = false,
-    AutoPowerUpgrade  = false,
-}
-
-local function getMyTycoon()
+-- Автоматический поиск вашего тайкуна и сетевой кнопки игры
+local function getTycoonRemote()
     for _, obj in ipairs(workspace:GetChildren()) do
         if obj.Name:match("^Tycoon%d+$") then
             local owner = obj:FindFirstChild("Owner", true)
             if owner and owner:IsA("ObjectValue") and owner.Value == player then
-                return obj
+                local remotes = obj:FindFirstChild("Remotes")
+                if remotes then
+                    return remotes:FindFirstChild("Ascend") 
+                        or remotes:FindFirstChild("Evolve") 
+                        or remotes:FindFirstChild("Rebirth")
+                        or remotes:FindFirstChild("InvestorRebirth")
+                end
             end
         end
     end
     return nil
 end
 
-local myTycoon = getMyTycoon()
-local function tycoon()
-    if not myTycoon then myTycoon = getMyTycoon() end
-    return myTycoon
-end
+-- Создаем аккуратную кнопку прямо на вашем экране
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local TextButton = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
 
-local function rem(name)
-    local t = tycoon()
-    if not t then return nil end
-    local remotes = t:FindFirstChild("Remotes")
-    if not remotes then return nil end
-    return remotes:FindFirstChild(name)
-end
+ScreenGui.Parent = game:GetService("CoreGui") or player:WaitForChild("PlayerGui")
 
--- ИНИЦИАЛИЗАЦИЯ ИНТЕРФЕЙСА PATCH HUB
-local Window = MacLib:CreateWindow({
-    Title = "Patch Hub",
-    Subtitle = "Sell Lemons",
-    Size = UDim2.fromOffset(550, 350),
-    Drag = true
-})
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.Position = UDim2.new(0.4, 0, 0.1, 0) -- Кнопка появится вверху по центру экрана
+Frame.Size = UDim2.new(0, 200, 0, 45)
+Frame.Active = true
+Frame.Draggable = true -- Кнопку можно двигать мышкой куда угодно!
 
-local Tab = Window:CreateTab({ Name = "Farm", Icon = "rbxassetid://4483345998" })
+TextButton.Parent = Frame
+TextButton.BackgroundColor3 = Color3.fromRGB(46, 204, 113) -- Яркий зеленый цвет
+TextButton.Size = UDim2.new(1, 0, 1, 0)
+TextButton.Font = Enum.Font.SourceSansBold
+TextButton.Text = "МГНОВЕННОЕ ВОЗРОЖДЕНИЕ"
+TextButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextButton.TextSize = 14
 
-Tab:CreateToggle({
-    Name = "Auto Buy Upgrades",
-    Default = false,
-    Callback = function(state) ENABLED.AutoBuyUpgrades = state end
-})
+UICorner.Parent = TextButton
+UICorner.CornerRadius = UDim.new(0, 8)
 
-Tab:CreateToggle({
-    Name = "Auto Upgrade Stands",
-    Default = false,
-    Callback = function(state) ENABLED.AutoUpgradeStands = state end
-})
-
-Tab:CreateToggle({
-    Name = "Auto Collect Fruit",
-    Default = false,
-    Callback = function(state) ENABLED.AutoCollectFruit = state end
-})
-
-Tab:CreateToggle({
-    Name = "Auto Collect Drops",
-    Default = false,
-    Callback = function(state) ENABLED.AutoCollectDrops = state end
-})
-
--- НАША НОВАЯ ОДИНОЧНАЯ КНОПКА МГНОВЕННОГО ВОЗРОЖДЕНИЯ В ОДИН КЛИК
-Tab:CreateButton({
-    Name = "Instant Rebirth (Investor)",
-    Callback = function()
-        local rebirthRF = rem("Ascend") or rem("Evolve") or rem("Rebirth") or remotes:FindFirstChild("InvestorRebirth")
-        if rebirthRF then
-            if rebirthRF:IsA("RemoteFunction") then
-                pcall(function() rebirthRF:InvokeServer("Confirm") end)
-                pcall(function() rebirthRF:InvokeServer(true) end)
-            elseif rebirthRF:IsA("RemoteEvent") then
-                pcall(function() rebirthRF:FireServer("Confirm") end)
-                pcall(function() rebirthRF:FireServer(true) end)
-            end
+-- Действие при одиночном клике на кнопку
+TextButton.MouseButton1Click:Connect(function()
+    local remote = getTycoonRemote()
+    if remote then
+        if remote:IsA("RemoteFunction") then
+            pcall(function() remote:InvokeServer("Confirm") end)
+            pcall(function() remote:InvokeServer(true) end)
+        elseif remote:IsA("RemoteEvent") then
+            pcall(function() remote:FireServer("Confirm") end)
+            pcall(function() remote:FireServer(true) end)
         end
     end
-})
+end)
 
-Tab:CreateToggle({
-    Name = "Auto Ascend",
-    Default = false,
-    Callback = function(state) ENABLED.AutoAscend = state end
-})
-
-Tab:CreateToggle({
-    Name = "Auto Evolve",
-    Default = false,
-    Callback = function(state) ENABLED.AutoEvolve = state end
-})
+print("[-] Автономная кнопка Возрождения успешно создана!")
