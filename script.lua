@@ -1,10 +1,9 @@
-local MacLib = loadstring(game:HttpGet("https://githubusercontent.com"))()
+local Rayfield = loadstring(game:HttpGet('https://githubusercontent.com'))()
 
 local Players    = game:GetService("Players")
 local workspace  = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local RS         = game:GetService("ReplicatedStorage")
-local VirtualUser= game:GetService("VirtualUser")
 
 local player = Players.LocalPlayer
 local char   = player.Character or player.CharacterAdded:Wait()
@@ -16,50 +15,12 @@ player.CharacterAdded:Connect(function(c)
 end)
 
 local FRUIT_CYCLE_DELAY    = 5
-local PHONE_OFFER_RESPONSE = "Accept"
-local POWER_NAMES = { "UpgradeStack", "BuyNext", "Manage", "WalkSpeed", "ClickFruitValue" }
-
-local INCOME_STREAMS = {
-    "LemonDash", "LemonDepot", "LemonLabs",
-    "LemonTrading", "LemonRepublic", "LemonRobotics",
-    "LemonStand", "LemonX",
-}
 
 local ENABLED = {
     AutoBuyUpgrades   = false,
     AutoCollectFruit  = false,
     AutoCollectDrops  = false,
-    AutoClick         = false,
-    AutoPhoneOffer    = false,
     AutoUpgradeStands = false,
-    AutoRebirth       = false,
-    AutoAscend        = false,
-    AutoEvolve        = false,
-    AutoPowerUpgrade  = false,
-    AutoOfflineCash   = false,
-    AutoTimeCash      = false,
-    AutoEarnerBoost   = false,
-    AutoMinigameRace  = false,
-    AutoMinigameTrade = false,
-    AutoCashVine      = false,
-    AntiAFK           = false,
-    BoostFPS          = false,
-}
-
-local STATS = {
-    upgradesBought = 0,
-    fruitCollected = 0,
-    dropsCollected = 0,
-    clicks         = 0,
-    phoneOffers    = 0,
-    standsUpgraded = 0,
-    rebirths       = 0,
-    ascends        = 0,
-    evolves        = 0,
-    powerUpgrades  = 0,
-    racesWon       = 0,
-    tradesWon      = 0,
-    vineCollected  = 0,
 }
 
 local function getMyTycoon()
@@ -88,32 +49,6 @@ local function tycoon()
     return myTycoon
 end
 
-local function rem(name)
-    local t = tycoon()
-    if not t then return nil end
-    local remotes = t:FindFirstChild("Remotes")
-    if not remotes then return nil end
-    return remotes:FindFirstChild(name)
-end
-
-local function getCash()
-    local ls = player:FindFirstChild("leaderstats")
-    if not ls then return 0 end
-    for _, v in ipairs(ls:GetChildren()) do
-        if v:IsA("NumberValue") or v:IsA("IntValue") then
-            local n = v.Name:lower()
-            if n:find("cash") or n:find("money") or n:find("lemon") or n:find("coin") then
-                return v.Value
-            end
-        end
-    end
-    local best = 0
-    for _, v in ipairs(ls:GetChildren()) do
-        if (v:IsA("NumberValue") or v:IsA("IntValue")) and v.Value > best then best = v.Value end
-    end
-    return best
-end
-
 local buyLock = {}
 
 local function runAutoUpgrades()
@@ -136,7 +71,6 @@ local function runAutoUpgrades()
             buyLock[obj] = true
             task.spawn(function()
                 pcall(function() obj:InvokeServer(false) end)
-                STATS.upgradesBought += 1
                 task.wait(1)
                 buyLock[obj] = nil
             end)
@@ -180,8 +114,7 @@ local function runAutoUpgradeStands()
         if not next(cachedStandRFs) then buildStandRFCache() return end
         for _, upgradeRF in pairs(cachedStandRFs) do
             task.spawn(function()
-                local ok = pcall(function() upgradeRF:InvokeServer(5) end)
-                if ok then STATS.standsUpgraded += 1 end
+                pcall(function() upgradeRF:InvokeServer(5) end)
             end)
         end
     end)
@@ -212,8 +145,7 @@ local function runAutoFruit()
             if not entry.part or not entry.part.Parent then continue end
             pcall(function() root.CFrame = CFrame.new(entry.part.Position + Vector3.new(0, 3, 0)) end)
             task.wait(0.1)
-            local ok = pcall(fireclickdetector, entry.cd)
-            if ok then STATS.fruitCollected += 1 end
+            pcall(fireclickdetector, entry.cd)
             task.wait(0.15)
         end
         pcall(function() root.CFrame = saved end)
@@ -233,68 +165,53 @@ task.spawn(function()
         if not ENABLED.AutoCollectDrops then return end
         if id == nil then return end
         task.spawn(function()
-            local ok = pcall(function() return redeemDrop:InvokeServer(id) end)
-            if ok then STATS.dropsCollected += 1 end
+            pcall(function() return redeemDrop:InvokeServer(id) end)
         end)
     end)
 end)
 
-local function runAutoCashDrops()
-    while true do
-        task.wait(4)
-        if not ENABLED.AutoCollectDrops then continue end
-    end
-end
-
 task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
-task.spawn(runAutoCashDrops)
 
-local Window = MacLib:CreateWindow({
-    Title = "Lemon Tycoon Script",
-    Subtitle = "by Nerwww",
-    Size = UDim2.fromOffset(550, 350),
-    Dragable = true
+-- СОЗДАНИЕ НОВОГО МЕНЮ RAYFIELD
+local Window = Rayfield:CreateWindow({
+   Name = "Lemon Tycoon Script",
+   LoadingTitle = "Загрузка чит-меню...",
+   LoadingSubtitle = "by Nerwww",
+   ConfigurationSaving = { Enabled = false }
 })
 
-local MainTab = Window:CreateTab({
-    Title = "Главная",
-    Image = "rbxassetid://4483345998"
+local Tab = Window:CreateTab("Главная", 4483345998)
+
+Tab:CreateToggle({
+   Name = "Авто-Покупка Апгрейдов",
+   CurrentValue = false,
+   Callback = function(Value)
+       ENABLED.AutoBuyUpgrades = Value
+   end,
 })
 
-local AutoGroup = MainTab:CreateGroup({
-    Title = "Функции Автоматизации"
+Tab:CreateToggle({
+   Name = "Авто-Сбор Фруктов",
+   CurrentValue = false,
+   Callback = function(Value)
+       ENABLED.AutoCollectFruit = Value
+   end,
 })
 
-AutoGroup:CreateToggle({
-    Title = "Авто-Покупка Апгрейдов",
-    Default = false,
-    Callback = function(Value)
-        ENABLED.AutoBuyUpgrades = Value
-    end
+Tab:CreateToggle({
+   Name = "Авто-Сбор Дропов",
+   CurrentValue = false,
+   Callback = function(Value)
+       ENABLED.AutoCollectDrops = Value
+   end,
 })
 
-AutoGroup:CreateToggle({
-    Title = "Авто-Сбор Фруктов",
-    Default = false,
-    Callback = function(Value)
-        ENABLED.AutoCollectFruit = Value
-    end
-})
-
-AutoGroup:CreateToggle({
-    Title = "Авто-Сбор Дропов",
-    Default = false,
-    Callback = function(Value)
-        ENABLED.AutoCollectDrops = Value
-    end
-})
-
-AutoGroup:CreateToggle({
-    Title = "Авто-Улучшение Стендов",
-    Default = false,
-    Callback = function(Value)
-        ENABLED.AutoUpgradeStands = Value
-    end
+Tab:CreateToggle({
+   Name = "Авто-Улучшение Стендов",
+   CurrentValue = false,
+   Callback = function(Value)
+       ENABLED.AutoUpgradeStands = Value
+   end,
 })
