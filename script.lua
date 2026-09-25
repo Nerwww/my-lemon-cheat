@@ -1,4 +1,3 @@
--- ВСТРОЕННАЯ БИБЛИОТЕКА ИНТЕРФЕЙСА (БЕЗ ССЫЛОК)
 local Kavo = loadstring(game:HttpGet('https://'..'raw.'..'github'..'usercontent'..'.com/'..'xHeptc/'..'Kavo-UI-'..'Library/'..'main/'..'source.lua'))()
 
 local Players    = game:GetService("Players")
@@ -157,7 +156,7 @@ task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
--- СОЗДАНИЕ ИНТЕРФЕЙСА KAVO
+-- НОВЫЙ ИНТЕРФЕЙС KAVO (СТАРЫЙ ИЗ СТРОКИ 178 ПОЛНОСТЬЮ УДАЛЕН)
 local Window = Kavo:CreateWindow("Lemon Tycoon", "Classic")
 local Tab = Window:NewTab("Главная")
 local Section = Tab:NewSection("Автоматизация")
