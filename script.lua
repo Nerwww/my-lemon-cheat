@@ -170,7 +170,7 @@ task.spawn(function()
     end)
 end)
 
---ТАЙМЕР ПЕРЕРОЖДЕНИЯ КАЖДЫЕ 30 СЕКУНД
+-- ИСПРАВЛЕННЫЙ ТАЙМЕР ПОД МЕНЮ ВОЗРОЖДЕНИЯ (РАЗ В 30 СЕКУНД)
 task.spawn(function()
     while true do
         task.wait(30)
@@ -179,9 +179,10 @@ task.spawn(function()
             if t then
                 local remotes = t:FindFirstChild("Remotes")
                 if remotes then
-                    local rebirthRemote = remotes:FindFirstChild("Rebirth")
-                    if rebirthRemote then
-                        pcall(function() rebirthRemote:FireServer() end)
+                    -- Проверяем по очереди все возможные варианты названий кнопки Возрождения
+                    local targetRemote = remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth")
+                    if targetRemote then
+                        pcall(function() targetRemote:FireServer() end)
                     end
                 end
             end
@@ -193,4 +194,4 @@ task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
-print("[-] Лимонный чит + Авто-Ребёрт 30с успешно активирован!")
+print("[-] Обновленный чит с авто-Возрождением (30с) успешно запущен!")
