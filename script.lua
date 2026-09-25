@@ -170,7 +170,7 @@ task.spawn(function()
     end)
 end)
 
--- ИСПРАВЛЕННЫЙ ТАЙМЕР ПОД МЕНЮ ВОЗРОЖДЕНИЯ (РАЗ В 30 СЕКУНД)
+-- УЛУЧШЕННЫЙ ТАЙМЕР ПОД ИНОПЛАНЕТНЫХ ИНВЕСТОРОВ (РАЗ В 30 СЕКУНД)
 task.spawn(function()
     while true do
         task.wait(30)
@@ -179,8 +179,8 @@ task.spawn(function()
             if t then
                 local remotes = t:FindFirstChild("Remotes")
                 if remotes then
-                    -- Проверяем по очереди все возможные варианты названий кнопки Возрождения
-                    local targetRemote = remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth")
+                    -- Проверяем все известные скрытые события игры для Возрождения
+                    local targetRemote = remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth") or remotes:FindFirstChild("InvestorRebirth")
                     if targetRemote then
                         pcall(function() targetRemote:FireServer() end)
                     end
@@ -194,4 +194,5 @@ task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
-print("[-] Обновленный чит с авто-Возрождением (30с) успешно запущен!")
+print("[-] Скрипт с авто-Возрождением инвесторов готов к работе!")
+
