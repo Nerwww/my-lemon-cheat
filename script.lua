@@ -2,6 +2,7 @@ local Players    = game:GetService("Players")
 local workspace  = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local RS         = game:GetService("ReplicatedStorage")
+local VirtualUser= game:GetService("VirtualUser")
 
 local player = Players.LocalPlayer
 local char   = player.Character or player.CharacterAdded:Wait()
@@ -170,7 +171,7 @@ task.spawn(function()
     end)
 end)
 
--- СУПЕР-ТАЙМЕР ОБХОДА ОКРЫТИЯ ОКНА (ВЫЗЫВАЕМ СЕРВЕР НАПРЯМУЮ С ПОДТВЕРЖДЕНИЕМ)
+-- ХИТРЫЙ ТАЙМЕР НА КЛИК ПО КООРДИНАТАМ ЭКРАНА (РАЗ В 30 СЕКУНД)
 task.spawn(function()
     while true do
         task.wait(30)
@@ -179,17 +180,35 @@ task.spawn(function()
             if t then
                 local remotes = t:FindFirstChild("Remotes")
                 if remotes then
-                    -- Находим нужную функцию в игре
+                    -- Шаг 1: Активируем открытие окна через стандартные сетевые ивенты
                     local targetRemote = remotes:FindFirstChild("Ascend") or remotes:FindFirstChild("Evolve") or remotes:FindFirstChild("Rebirth") or remotes:FindFirstChild("InvestorRebirth")
                     if targetRemote then
-                        -- Отправляем аргумент true, сообщая игре, что мы УЖЕ согласились в окне подтверждения!
-                        pcall(function() targetRemote:InvokeServer(true) end)
-                        pcall(function() targetRemote:FireServer(true) end)
-                        
-                        -- Альтернативный вариант для некоторых версий тайкунов (отправка пустой строки-подтверждения)
-                        pcall(function() targetRemote:InvokeServer() end)
                         pcall(function() targetRemote:FireServer() end)
                     end
+                    
+                    -- Шаг 2: Ждем, пока окно появится, и эмулируем аппаратный клик мыши по UI
+                    task.wait(0.6)
+                    pcall(function()
+                        local pGui = player:FindFirstChild("PlayerGui")
+                        if pGui then
+                            for _, gui in ipairs(pGui:GetDescendants()) do
+                                -- Ищем именно ту зеленую кнопку подтверждения из вашего скриншота
+                                if gui:IsA("TextButton") and (gui.Text:find("Возрождение") or gui.Text:find("Ascend") or gui.Name:lower():find("confirm")) then
+                                    if gui.IsVisible or (gui.Parent:IsA("GuiObject") and gui.Parent.Visible) then
+                                        -- Вычисляем её центр на вашем мониторе/экране
+                                        local absPos = gui.AbsolutePosition
+                                        local absSize = gui.AbsoluteSize
+                                        local clickX = absPos.X + (absSize.X / 2)
+                                        local clickY = absPos.Y + (absSize.Y / 2) + 50 -- Учитываем смещение верхней панели Roblox
+                                        
+                                        -- Физический виртуальный клик мышкой по кнопке
+                                        VirtualUser:CaptureController()
+                                        VirtualUser:ClickButton1(Vector2.new(clickX, clickY))
+                                    end
+                                end
+                            end
+                        end
+                    end)
                 end
             end
         end
@@ -200,4 +219,4 @@ task.spawn(runAutoUpgrades)
 task.spawn(runAutoUpgradeStands)
 task.spawn(runAutoFruit)
 
-print("[-] Скрипт с обходом окон подтверждения успешно запущен!")
+print("[-] Скрипт с аппаратным обходом кликов GUI запущен!")
